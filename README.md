@@ -27,6 +27,9 @@ Fast proxy checker/grabber with some features:
 
 This project uses:
 ```
+Virtual-TreeView
+https://github.com/JAM-Software/Virtual-TreeView
+
 Synapse
 https://github.com/geby/synapse
 
