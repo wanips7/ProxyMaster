@@ -590,8 +590,6 @@ begin
 
   Logger.OnLog := LogEventHandler;
 
-  FProxyGeoFetcher := TProxyGeoFetcher.Create(AppPath + IP_GEO_FILE_NAME);
-
   FClientIpFetcher := TClientIpFetcher.Create;
   FClientIpFetcher.OnFetch := ClientIpFetchEventHandler;
 
@@ -617,6 +615,8 @@ begin
   Database.ProxySourcesTable.OnChange := ProxySourcesTableChangeEventHandler;
   Database.CheckerPresetsTable.OnChange := CheckerPresetsTableChangeEventHandler;
   Database.Connect(AppPath + DATABASE_FILE_NAME);
+
+  FProxyGeoFetcher := TProxyGeoFetcher.Create(AppPath + IP_GEO_FILE_NAME);
 
   LoadCheckerPresets;
   LoadProxySources;
