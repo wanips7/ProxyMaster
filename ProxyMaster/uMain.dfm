@@ -31,7 +31,7 @@ object MainForm: TMainForm
     Margins.Top = 4
     Margins.Right = 4
     Margins.Bottom = 4
-    ActivePage = TabSheet4
+    ActivePage = TabSheet8
     Align = alClient
     TabOrder = 0
     object TabSheet1: TTabSheet
@@ -1136,7 +1136,7 @@ object MainForm: TMainForm
       end
       object Label34: TLabel
         Left = 30
-        Top = 140
+        Top = 110
         Width = 112
         Height = 20
         Margins.Left = 4
@@ -1147,19 +1147,20 @@ object MainForm: TMainForm
       end
       object Label35: TLabel
         Left = 30
-        Top = 180
-        Width = 316
-        Height = 280
+        Top = 150
+        Width = 337
+        Height = 340
         Margins.Left = 4
         Margins.Top = 4
         Margins.Right = 4
         Margins.Bottom = 4
         Caption = 
-          'Synapse'#13#10'https://github.com/geby/synapse'#13#10#13#10'Rapid.Generics'#13#10'http' +
-          's://github.com/d-mozulyov/Rapid.Generics'#13#10#13#10'MMDB Reader'#13#10'https:/' +
-          '/github.com/optinsoft/MMDBReader'#13#10#13#10'DelphiBigNumbers'#13#10'https://gi' +
-          'thub.com/rvelthuis/DelphiBigNumbers'#13#10#13#10'IP geolocation database'#13#10 +
-          'https://github.com/P3TERX/GeoLite.mmdb'
+          'Virtual-TreeView'#13#10'https://github.com/JAM-Software/Virtual-TreeVi' +
+          'ew'#13#10#13#10'Synapse'#13#10'https://github.com/geby/synapse'#13#10#13#10'Rapid.Generics' +
+          #13#10'https://github.com/d-mozulyov/Rapid.Generics'#13#10#13#10'MMDB Reader'#13#10'h' +
+          'ttps://github.com/optinsoft/MMDBReader'#13#10#13#10'DelphiBigNumbers'#13#10'http' +
+          's://github.com/rvelthuis/DelphiBigNumbers'#13#10#13#10'IP geolocation data' +
+          'base'#13#10'https://github.com/P3TERX/GeoLite.mmdb'
       end
       object Label36: TLabel
         Left = 30
