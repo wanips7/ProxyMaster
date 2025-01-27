@@ -33,7 +33,7 @@ uses
   uTypes, uProxy;
 
 const
-  APP_VERSION = '1.0.0';
+  APP_VERSION = '1.0.1';
   SETTINGS_FILE_NAME = 'settings.ini';
   DATABASE_FILE_NAME = 'database.db';
   IP_GEO_FILE_NAME = 'GeoLite2-City.mmdb';

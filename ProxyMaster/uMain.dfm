@@ -31,7 +31,7 @@ object MainForm: TMainForm
     Margins.Top = 4
     Margins.Right = 4
     Margins.Bottom = 4
-    ActivePage = TabSheet8
+    ActivePage = TabSheet1
     Align = alClient
     TabOrder = 0
     object TabSheet1: TTabSheet

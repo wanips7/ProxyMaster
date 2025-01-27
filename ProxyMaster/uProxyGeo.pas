@@ -30,7 +30,7 @@ interface
 {$ENDREGION}
 
 uses
-  System.SysUtils, uTypes, uMMDBReader, uMMDBInfo, uMMDBIPAddress;
+  System.SysUtils, System.SyncObjs, uTypes, uMMDBReader, uMMDBInfo, uMMDBIPAddress;
 
 type
   EProxyGeoFetcherError = class(Exception);
@@ -38,6 +38,7 @@ type
 type
   TProxyGeoFetcher = class
   strict private
+    FLock: TCriticalSection;
     FMMDBReader: TMMDBReader;
     FIPAddress: TMMDBIPAddress;
   public
@@ -53,6 +54,7 @@ implementation
 
 constructor TProxyGeoFetcher.Create(const DatabaseFileName: string);
 begin
+  FLock := TCriticalSection.Create;
   FMMDBReader := nil;
   FMMDBReader := TMMDBReader.Create(DatabaseFileName);
 
@@ -60,6 +62,7 @@ end;
 
 destructor TProxyGeoFetcher.Destroy;
 begin
+  FLock.Free;
   FMMDBReader.Free;
 
   inherited;
@@ -80,9 +83,10 @@ begin
   if not Assigned(FMMDBReader) then
     raise EProxyGeoFetcherError.Create('MMDBReader file is not specified.');
 
-  IPCountryCityInfo := TMMDBIPCountryCityInfoEx.Create;
-
+  FLock.Enter;
   try
+    IPCountryCityInfo := TMMDBIPCountryCityInfoEx.Create;
+
     FIPAddress := TMMDBIPAddress.Parse(ProxyEx.Proxy.HostAsString);
 
     if FMMDBReader.Find<TMMDBIPCountryCityInfoEx>(FIPAddress, prefixLength, IPCountryCityInfo) then
@@ -96,10 +100,9 @@ begin
     end;
 
   finally
-
+    IPCountryCityInfo.Free;
+    FLock.Leave;
   end;
-
-  IPCountryCityInfo.Free;
 
 end;
 

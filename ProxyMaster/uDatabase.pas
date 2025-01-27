@@ -102,6 +102,9 @@ var
 
 implementation
 
+var
+  LocalFormatSettings: TFormatSettings;
+
 { TBaseTable<T> }
 
 procedure TBaseTable<T>.Clear;
@@ -221,13 +224,18 @@ end;
 procedure TCheckerPresetsTable.Add(const Value: TCheckerPreset);
 begin
   ExecSQL(Format('INSERT INTO %s' +
-    '(Url, Name, Timeout, RequestHeaders, UserAgent, StatusCode, SaveHttp, ' +
-    'SaveSocks4, SaveSocks5, SaveBad, SaveToFile, AddGoodProxyToTable) ' +
-    'VALUES(''%s'', ''%s'', %d, ''%s'', ''%s'', %d, %d, %d, %d, %d, %d, %d, %d)',
-    [TableName, Value.Url, Value.Name, Value.Timeout,
-    Value.RequestHeaders, Value.UserAgent, Value.StatusCode, Integer(Value.SaveHttp),
-    Integer(Value.SaveSocks4), Integer(Value.SaveSocks5), Integer(Value.SaveBad),
-    Integer(Value.SaveToFile), Integer(Value.SaveToLocalServer), Integer(Value.AddGoodProxyToTable)]));
+    '(Name, Url, Timeout, RequestHeaders, UserAgent, ' +
+    'SaveHttp, SaveSocks4, SaveSocks5, SaveBad, SaveToFile, SaveToLocalServer, ' +
+    'StatusCode, AnonymityLevel, Countries, MaxPing, ' +
+    'AddGoodProxyToTable) ' +
+    'VALUES(''%s'', ''%s'', %d, ''%s'', ''%s'', %d, %d, %d, %d, %d, %d, %d, %d, ''%s'', %f, %d)',
+    [TableName, Value.Name,
+    Value.Request.Url, Value.Request.Timeout, Value.Request.Headers, Value.Request.UserAgent,
+    Integer(Value.ProxySaving.Http), Integer(Value.ProxySaving.Socks4), Integer(Value.ProxySaving.Socks5),
+    Integer(Value.ProxySaving.Bad), Integer(Value.ProxySaving.ToFile), Integer(Value.ProxySaving.ToLocalServer),
+    Value.GoodProxy.StatusCode, Integer(Value.GoodProxy.AnonymityLevel), Value.GoodProxy.Countries,
+    Value.GoodProxy.MaxPing,
+    Integer(Value.AddGoodProxyToTable)], LocalFormatSettings));
 end;
 
 function TCheckerPresetsTable.ContainsName(const Value: string): Boolean;
@@ -246,39 +254,48 @@ end;
 function TCheckerPresetsTable.GetCurrent: TCheckerPreset;
 begin
   Result.Id := Query.FieldByName('Id').AsInteger;
-  Result.Url := Query.FieldByName('Url').AsString;
-
   Result.Name := Query.FieldByName('Name').AsString;
 
-  Result.Timeout := Query.FieldByName('Timeout').AsInteger;
-  Result.RequestHeaders := Query.FieldByName('RequestHeaders').AsString;
-  Result.UserAgent := Query.FieldByName('UserAgent').AsString;
-  Result.StatusCode := Query.FieldByName('StatusCode').AsInteger;
-
-  Result.SaveHttp := Query.FieldByName('SaveHttp').AsBoolean;
-  Result.SaveSocks4 := Query.FieldByName('SaveSocks4').AsBoolean;
-  Result.SaveSocks5 := Query.FieldByName('SaveSocks5').AsBoolean;
-  Result.SaveBad := Query.FieldByName('SaveBad').AsBoolean;
-  Result.SaveToFile := Query.FieldByName('SaveToFile').AsBoolean;
-  Result.SaveToLocalServer := Query.FieldByName('SaveToLocalServer').AsBoolean;
+  Result.Request.Url := Query.FieldByName('Url').AsString;
+  Result.Request.Timeout := Query.FieldByName('Timeout').AsInteger;
+  Result.Request.Headers := Query.FieldByName('RequestHeaders').AsString;
+  Result.Request.UserAgent := Query.FieldByName('UserAgent').AsString;
 
   Result.AddGoodProxyToTable := Query.FieldByName('AddGoodProxyToTable').AsBoolean;
 
+  Result.ProxySaving.Http := Query.FieldByName('SaveHttp').AsBoolean;
+  Result.ProxySaving.Socks4 := Query.FieldByName('SaveSocks4').AsBoolean;
+  Result.ProxySaving.Socks5 := Query.FieldByName('SaveSocks5').AsBoolean;
+  Result.ProxySaving.Bad := Query.FieldByName('SaveBad').AsBoolean;
+  Result.ProxySaving.ToFile := Query.FieldByName('SaveToFile').AsBoolean;
+  Result.ProxySaving.ToLocalServer := Query.FieldByName('SaveToLocalServer').AsBoolean;
+
+  Result.GoodProxy.StatusCode := Query.FieldByName('StatusCode').AsInteger;
+  Result.GoodProxy.AnonymityLevel := TAnonymityLevel(Query.FieldByName('AnonymityLevel').AsInteger);
+  Result.GoodProxy.Countries := Query.FieldByName('Countries').AsString;
+  Result.GoodProxy.MaxPing := Query.FieldByName('MaxPing').AsSingle;
 
 end;
 
 procedure TCheckerPresetsTable.Update(const Value: TCheckerPreset);
 begin
   ExecSQL(Format(
-    'UPDATE %s SET Url = ''%s'', Name = ''%s'', Timeout = %d, ' +
-    'RequestHeaders = ''%s'', UserAgent = ''%s'', StatusCode = %d, SaveHttp = %d, SaveSocks4 = %d, ' +
-    'SaveSocks5 = %d, SaveBad = %d, SaveToFile = %d, SaveToLocalServer = %d, AddGoodProxyToTable = %d ' +
+    'UPDATE %s SET Name = ''%s'', Url = ''%s'', Timeout = %d, ' +
+    'RequestHeaders = ''%s'', UserAgent = ''%s'', SaveHttp = %d, SaveSocks4 = %d, ' +
+    'SaveSocks5 = %d, SaveBad = %d, SaveToFile = %d, SaveToLocalServer = %d, ' +
+    'StatusCode = %d, AnonymityLevel = %d, Countries = ''%s'', MaxPing = %f, ' +
+    'AddGoodProxyToTable = %d ' +
     'WHERE Id = %d',
-    [TableName, Value.Url, Value.Name, Value.Timeout,
-    Value.RequestHeaders, Value.UserAgent, Value.StatusCode, Integer(Value.SaveHttp),
-    Integer(Value.SaveSocks4), Integer(Value.SaveSocks5), Integer(Value.SaveBad),
-    Integer(Value.SaveToFile), Integer(Value.SaveToLocalServer), Integer(Value.AddGoodProxyToTable),
-    Value.Id]));
+    [TableName, Value.Name,
+    Value.Request.Url, Value.Request.Timeout, Value.Request.Headers, Value.Request.UserAgent,
+    Integer(Value.ProxySaving.Http), Integer(Value.ProxySaving.Socks4), Integer(Value.ProxySaving.Socks5),
+    Integer(Value.ProxySaving.Bad), Integer(Value.ProxySaving.ToFile), Integer(Value.ProxySaving.ToLocalServer),
+    Value.GoodProxy.StatusCode, Integer(Value.GoodProxy.AnonymityLevel), Value.GoodProxy.Countries,
+    Value.GoodProxy.MaxPing,
+    Integer(Value.AddGoodProxyToTable),
+    Value.Id], LocalFormatSettings));
+
+
 end;
 
 { TDatabase }
@@ -324,5 +341,8 @@ procedure TDatabase.Disconnect;
 begin
   FConnection.Close;
 end;
+
+Initialization
+  LocalFormatSettings.DecimalSeparator := '.';
 
 end.

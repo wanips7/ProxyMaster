@@ -31,10 +31,12 @@ interface
 
 uses
   Winapi.Windows, System.SysUtils, System.Classes, System.Generics.Collections,
-  uProxy, uTypes, uHttpClient, uProxyParser, System.SyncObjs;
+  System.SyncObjs, uProxy, uTypes, uHttpClient, uProxyParser, uProxyGeo;
 
 type
   TProxyChecker = class
+  public const
+    COUNTRIES_SEPARATOR = ',';
   strict private
     FHttpClient: THttpClient;
     FPreset: TCheckerPreset;
@@ -42,16 +44,20 @@ type
     FClientIP: string;
     FIsRunning: Boolean;
     FLock: TCriticalSection;
+    FGoodProxyCountries: TDictionary<string, Byte>;
+    FProxyGeoFetcher: TProxyGeoFetcher;
     function GetAnonymityLevel(Headers: string): TAnonymityLevel;
+    function IsGoodProxy(const Value: TProxyEx): Boolean;
     procedure SetHttpClientSettings(const Proxy: TProxy);
     function CheckProxy(const Proxy: TProxy): TProxyEx;
     function ShouldCheck(const ProxyProtocol: TProxy.TProtocol): Boolean;
+    procedure SetPreset(const Value: TCheckerPreset);
   public
     property ConnectTic: Int64 read FConnectTic;
     property IsRunning: Boolean read FIsRunning;
     property ClientIP: string read FClientIP write FClientIP;
-    property Preset: TCheckerPreset read FPreset write FPreset;
-    constructor Create;
+    property Preset: TCheckerPreset read FPreset write SetPreset;
+    constructor Create(ProxyGeoFetcher: TProxyGeoFetcher);
     destructor Destroy; override;
     function Check(Proxy: TProxy): TProxyEx;
     procedure CloseConnection;
@@ -101,14 +107,17 @@ begin
   FConnectTic := GetTickCount;
   FIsRunning := True;
 
-  if FHttpClient.RequestGet(FPreset.Url) then
+  if FHttpClient.RequestGet(FPreset.Request.Url) then
   begin
     Result.Status := TProxyStatus.Online;
+    Result.StatusCode := FHttpClient.ResultCode;
+    Result.AnonymityLevel := GetAnonymityLevel(FHttpClient.Headers.Text);
     Result.Ping := (GetTickCount - FConnectTic) / 1000;
 
-    if FHttpClient.ResultCode = FPreset.StatusCode then
+    FProxyGeoFetcher.TryFetch(Result);
+
+    if IsGoodProxy(Result) then
     begin
-      Result.AnonymityLevel := GetAnonymityLevel(FHttpClient.Headers.Text);
       Result.Status := TProxyStatus.Good;
     end;
 
@@ -135,10 +144,12 @@ begin
   end;
 end;
 
-constructor TProxyChecker.Create;
+constructor TProxyChecker.Create(ProxyGeoFetcher: TProxyGeoFetcher);
 begin
   FLock := TCriticalSection.Create;
   FHttpClient := THttpClient.Create;
+  FGoodProxyCountries := TDictionary<string, Byte>.Create;
+  FProxyGeoFetcher := ProxyGeoFetcher;
   FClientIP := '';
   FPreset := default(TCheckerPreset);
   FIsRunning := False;
@@ -148,6 +159,7 @@ end;
 destructor TProxyChecker.Destroy;
 begin
   FLock.Free;
+  FGoodProxyCountries.Free;
   FHttpClient.Free;
 
   inherited;
@@ -184,23 +196,60 @@ begin
 
 end;
 
+function TProxyChecker.IsGoodProxy(const Value: TProxyEx): Boolean;
+begin
+  Result := Value.StatusCode = FPreset.GoodProxy.StatusCode;
+
+  if not Result then
+    Exit;
+
+  if FPreset.GoodProxy.AnonymityLevel <> TAnonymityLevel.Unknown then
+    Result := Value.AnonymityLevel = FPreset.GoodProxy.AnonymityLevel;
+
+  if not Result then
+    Exit;
+
+  if not FPreset.GoodProxy.Countries.IsEmpty then
+    Result := FGoodProxyCountries.ContainsKey(Value.Country);
+
+  if not Result then
+    Exit;
+
+  if FPreset.GoodProxy.MaxPing > 0 then
+    Result := Value.Ping <= FPreset.GoodProxy.MaxPing;
+
+end;
+
 procedure TProxyChecker.SetHttpClientSettings(const Proxy: TProxy);
 begin
   FHttpClient.Clear;
-  FHttpClient.Timeout := FPreset.Timeout;
+  FHttpClient.Timeout := FPreset.Request.Timeout;
   FHttpClient.Proxy := Proxy;
   FHttpClient.UseProxy := True;
-  FHttpClient.Headers.Text := FPreset.RequestHeaders;
-  FHttpClient.UserAgent := FPreset.UserAgent;
+  FHttpClient.Headers.Text := FPreset.Request.Headers;
+  FHttpClient.UserAgent := FPreset.Request.UserAgent;
+
+end;
+
+procedure TProxyChecker.SetPreset(const Value: TCheckerPreset);
+var
+  s: string;
+begin
+  FPreset := Value;
+
+  FGoodProxyCountries.Clear;
+
+  for s in Value.GoodProxy.Countries.Split([COUNTRIES_SEPARATOR]) do
+    FGoodProxyCountries.TryAdd(s.Trim.ToUpper, 0);
 
 end;
 
 function TProxyChecker.ShouldCheck(const ProxyProtocol: TProxy.TProtocol): Boolean;
 begin
   Result := (ProxyProtocol = TProxy.TProtocol.Unknown) or
-    ((ProxyProtocol = TProxy.TProtocol.Http) and FPreset.SaveHttp) or
-    ((ProxyProtocol = TProxy.TProtocol.Socks4) and FPreset.SaveSocks4) or
-    ((ProxyProtocol = TProxy.TProtocol.Socks5) and FPreset.SaveSocks5);
+    ((ProxyProtocol = TProxy.TProtocol.Http) and FPreset.ProxySaving.Http) or
+    ((ProxyProtocol = TProxy.TProtocol.Socks4) and FPreset.ProxySaving.Socks4) or
+    ((ProxyProtocol = TProxy.TProtocol.Socks5) and FPreset.ProxySaving.Socks5);
 end;
 
 end.

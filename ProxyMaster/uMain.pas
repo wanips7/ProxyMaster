@@ -217,9 +217,9 @@ type
     function MillisecondsToSeconds(const Value: Cardinal): Cardinal;
   public
     procedure Prepare;
-    procedure AddProxyToTable(const Value: TProxyEx); overload;
-    procedure AddProxyToTable(const Value: TProxy); overload;
-    procedure AddProxyListToTable(const Value: TProxyList);
+    procedure AddProxyToTable(const Value: TProxyEx; const FetchGeo: Boolean); overload;
+    procedure AddProxyToTable(const Value: TProxy; const FetchGeo: Boolean); overload;
+    procedure AddProxyListToTable(const Value: TProxyList; const FetchGeo: Boolean);
   end;
 
 var
@@ -234,7 +234,7 @@ uses
   System.Threading, uAddProxies, uDatabase, uEditProxySource, uEditCheckerPreset, uSettings,
   Vcl.Clipbrd, uProxyParser, uUrlParser, uConst;
 
-procedure TMainForm.AddProxyToTable(const Value: TProxyEx);
+procedure TMainForm.AddProxyToTable(const Value: TProxyEx; const FetchGeo: Boolean);
 var
   Node: PVirtualNode;
   Data: PProxyEx;
@@ -244,17 +244,19 @@ begin
   if Assigned(Data) then
   begin
     Data^ := Value;
-    FProxyGeoFetcher.TryFetch(Data);
+
+    if FetchGeo then
+      FProxyGeoFetcher.TryFetch(Data);
   end;
 end;
 
-procedure TMainForm.AddProxyToTable(const Value: TProxy);
+procedure TMainForm.AddProxyToTable(const Value: TProxy; const FetchGeo: Boolean);
 var
   ProxyEx: TProxyEx;
 begin
   ProxyEx.Clear;
   ProxyEx.Proxy := Value;
-  AddProxyToTable(ProxyEx);
+  AddProxyToTable(ProxyEx, FetchGeo);
 end;
 
 procedure TMainForm.Prepare;
@@ -345,12 +347,12 @@ var
 begin
   UpdateCheckerStats;
 
-  if FProxyCheckerService.Preset.SaveToFile then
+  if FProxyCheckerService.Preset.ProxySaving.ToFile then
   begin
     SaveCheckedProxiesToFile;
   end;
 
-  if FProxyCheckerService.Preset.SaveToLocalServer then
+  if FProxyCheckerService.Preset.ProxySaving.ToLocalServer then
   begin
     FLocalServer.Start;
     FLocalServer.UpdateResponse;
@@ -364,7 +366,8 @@ begin
   GroupBox2.Enabled := True;
   GroupBox5.Enabled := True;
 
-  s := 'Http(s) count: ' + FProxyCheckerService.Results.HttpList.Count.ToString + sLineBreak +
+  s :=
+    'Http(s) count: ' + FProxyCheckerService.Results.HttpList.Count.ToString + sLineBreak +
     'Socks4 count: ' + FProxyCheckerService.Results.Socks4List.Count.ToString + sLineBreak +
     'Socks5 count: ' + FProxyCheckerService.Results.Socks5List.Count.ToString + sLineBreak +
     'Good count: ' + FProxyCheckerService.Results.GetGoodCount.ToString + sLineBreak +
@@ -532,7 +535,7 @@ procedure TMainForm.AddGoodProxiesToTable;
   begin
     for ProxyEx in List do
     begin
-      AddProxyToTable(ProxyEx);
+      AddProxyToTable(ProxyEx, False);
     end;
   end;
 
@@ -550,7 +553,7 @@ begin
   AddProxiesForm.ShowModal(TAddPlace.List);
 end;
 
-procedure TMainForm.AddProxyListToTable(const Value: TProxyList);
+procedure TMainForm.AddProxyListToTable(const Value: TProxyList; const FetchGeo: Boolean);
 var
   Proxy: TProxy;
 begin
@@ -558,7 +561,7 @@ begin
 
   for Proxy in Value do
   begin
-    AddProxyToTable(Proxy);
+    AddProxyToTable(Proxy, FetchGeo);
   end;
 
   ProxiesVirtualStringTree.EndUpdate;
@@ -593,11 +596,13 @@ begin
   FClientIpFetcher := TClientIpFetcher.Create;
   FClientIpFetcher.OnFetch := ClientIpFetchEventHandler;
 
+  FProxyGeoFetcher := TProxyGeoFetcher.Create(AppPath + IP_GEO_FILE_NAME);
+
   FProxyGrabberService := TProxyGrabberService.Create;
   FProxyGrabberService.OnStart := StartProxyGrabberEventHandler;
   FProxyGrabberService.OnFinish := FinishProxyGrabberEventHandler;
 
-  FProxyCheckerService := TProxyCheckerService.Create;
+  FProxyCheckerService := TProxyCheckerService.Create(FProxyGeoFetcher);
   FProxyCheckerService.OnStart := StartProxyCheckerEventHandler;
   FProxyCheckerService.OnRun := RunProxyCheckerEventHandler;
   FProxyCheckerService.OnFinish := FinishProxyCheckerEventHandler;
@@ -615,8 +620,6 @@ begin
   Database.ProxySourcesTable.OnChange := ProxySourcesTableChangeEventHandler;
   Database.CheckerPresetsTable.OnChange := CheckerPresetsTableChangeEventHandler;
   Database.Connect(AppPath + DATABASE_FILE_NAME);
-
-  FProxyGeoFetcher := TProxyGeoFetcher.Create(AppPath + IP_GEO_FILE_NAME);
 
   LoadCheckerPresets;
   LoadProxySources;
@@ -918,16 +921,16 @@ begin
 
   CreateDirectoryIfNotExist(Path);
 
-  if FProxyCheckerService.Preset.SaveHttp then
+  if FProxyCheckerService.Preset.ProxySaving.Http then
     FProxyCheckerService.Results.SaveGoodToFile(Path + 'Http.txt', TProxy.TProtocol.Http);
 
-  if FProxyCheckerService.Preset.SaveSocks4 then
+  if FProxyCheckerService.Preset.ProxySaving.Socks4 then
     FProxyCheckerService.Results.SaveGoodToFile(Path + 'Socks4.txt', TProxy.TProtocol.Socks4);
 
-  if FProxyCheckerService.Preset.SaveSocks5 then
+  if FProxyCheckerService.Preset.ProxySaving.Socks5 then
     FProxyCheckerService.Results.SaveGoodToFile(Path + 'Socks5.txt', TProxy.TProtocol.Socks5);
 
-  if FProxyCheckerService.Preset.SaveBad then
+  if FProxyCheckerService.Preset.ProxySaving.Bad then
     FProxyCheckerService.Results.SaveBadToFile(Path + 'Bad.txt');
 end;
 
@@ -1005,7 +1008,7 @@ begin
 
     for Proxy in FProxyGrabberService.Results.Values do
     begin
-      AddProxyToTable(Proxy);
+      AddProxyToTable(Proxy, True);
     end;
 
     ProxiesVirtualStringTree.EndUpdate;

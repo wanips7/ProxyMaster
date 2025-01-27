@@ -32,7 +32,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes, System.Threading,
   System.SyncObjs, System.Generics.Defaults, System.Generics.Collections, uProxy, uTypes,
-  uProxyList, uProxyChecker, uHttpClient;
+  uProxyList, uProxyChecker, uHttpClient, uProxyGeo;
 
 type
   PStatistics = ^TStatistics;
@@ -84,7 +84,7 @@ type
     property ProxyChecker: TProxyChecker read FProxyChecker;
     constructor Create(const Id: Integer; ActiveCount: PInteger; Stop: PBoolean;
       Statistics: PStatistics; Proxies: TProxyList; Preset: PCheckerPreset; Index: PInteger;
-      Results: TProxyResultList; OnResult: TOnResultEvent; const ClientIp: string);
+      Results: TProxyResultList; OnResult: TOnResultEvent; const ClientIp: string; ProxyGeoFetcher: TProxyGeoFetcher);
     destructor Destroy; override;
   end;
 
@@ -140,6 +140,8 @@ type
     procedure CheckCanStart(const ThreadCount: Integer);
     procedure RaiseError(const Text: string);
     procedure RaiseErrorF(const Text: string; const Args: array of const);
+  protected
+    FProxyGeoFetcher: TProxyGeoFetcher;
   public
     property OnStart: TNotifyEvent read FOnStart write FOnStart;
     property OnFinish: TNotifyEvent read FOnFinish write FOnFinish;
@@ -153,7 +155,7 @@ type
     property Statistics: TStatistics read FStatistics;
     property StartDateTime: TDateTime read FStartDateTime;
     property Threads: TWorkerThreads read FWorkerThreads;
-    constructor Create;
+    constructor Create(ProxyGeoFetcher: TProxyGeoFetcher);
     destructor Destroy; override;
     procedure Start(const ThreadCount: Integer);
     procedure Stop;
@@ -189,7 +191,7 @@ end;
 
 constructor TWorkerThread.Create(const Id: Integer; ActiveCount: PInteger; Stop: PBoolean;
   Statistics: PStatistics; Proxies: TProxyList; Preset: PCheckerPreset; Index: PInteger;
-  Results: TProxyResultList; OnResult: TOnResultEvent; const ClientIp: string);
+  Results: TProxyResultList; OnResult: TOnResultEvent; const ClientIp: string; ProxyGeoFetcher: TProxyGeoFetcher);
 begin
   inherited Create(False);
 
@@ -204,7 +206,7 @@ begin
   FPreset := Preset;
   FResults := Results;
 
-  FProxyChecker := TProxyChecker.Create;
+  FProxyChecker := TProxyChecker.Create(ProxyGeoFetcher);
   FProxyChecker.Preset := Preset^;
   FProxyChecker.ClientIP := ClientIp;
 
@@ -341,8 +343,8 @@ begin
 
   if Length(FList) > 0 then
     for i := 0 to High(FList) do
-      FList[i] := TWorkerThread.Create(i, @FActiveCount, @FStop, @FOwner.Statistics,
-        FOwner.Proxies, @FOwner.Preset, @FIndex, FOwner.Results, FOwner.OnResult, FOwner.ClientIp);
+      FList[i] := TWorkerThread.Create(i, @FActiveCount, @FStop, @FOwner.Statistics, FOwner.Proxies,
+      @FOwner.Preset, @FIndex, FOwner.Results, FOwner.OnResult, FOwner.ClientIp, FOwner.FProxyGeoFetcher);
 end;
 
 procedure TWorkerThreads.Stop;
@@ -352,8 +354,9 @@ end;
 
 { TProxyCheckerService }
 
-constructor TProxyCheckerService.Create;
+constructor TProxyCheckerService.Create(ProxyGeoFetcher: TProxyGeoFetcher);
 begin
+  FProxyGeoFetcher := ProxyGeoFetcher;
   FWorkerThreads := TWorkerThreads.Create(Self);
   FProxies := TProxyList.Create;
   FResults := TProxyResultList.Create;

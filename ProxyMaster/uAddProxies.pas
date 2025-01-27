@@ -87,7 +87,7 @@ begin
     List := TProxyList.Create;
     List.LoadFromText(ProxiesMemo.Text, GetSelectedProtocol);
 
-    MainForm.AddProxyListToTable(List);
+    MainForm.AddProxyListToTable(List, True);
 
     List.Free;
   end;
@@ -118,7 +118,7 @@ begin
       List := TProxyList.Create;
       List.LoadFromFile(OpenDialog.FileName, GetSelectedProtocol);
 
-      MainForm.AddProxyListToTable(List);
+      MainForm.AddProxyListToTable(List, True);
 
       List.Free;
     end;

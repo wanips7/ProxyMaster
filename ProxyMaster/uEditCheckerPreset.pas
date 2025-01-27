@@ -62,14 +62,24 @@ type
     Label6: TLabel;
     NumberBox2: TNumberBox;
     CheckBox8: TCheckBox;
+    Label7: TLabel;
+    Edit1: TEdit;
+    Label8: TLabel;
+    Label9: TLabel;
+    ComboBox1: TComboBox;
+    NumberBox3: TNumberBox;
+    CountriesHelpButton: TButton;
     procedure FormCreate(Sender: TObject);
     procedure SaveButtonClick(Sender: TObject);
-  private
+    procedure CountriesHelpButtonClick(Sender: TObject);
+  strict private
     FCheckerPreset: TCheckerPreset;
     procedure Clear;
     procedure Fill(const CheckerPreset: TCheckerPreset);
     function IsDataValid: Boolean;
     procedure SetFirstPage;
+    procedure ShowMessageBox(const Text, Title: string);
+    procedure ShowErrorMessageBox(const Text: string);
   public
     procedure ShowModalForAdding;
     procedure ShowModalForEditing(const CheckerPreset: TCheckerPreset);
@@ -108,27 +118,35 @@ begin
   CheckBox5.Checked := True;
 end;
 
+procedure TEditCheckerPresetForm.CountriesHelpButtonClick(Sender: TObject);
+begin
+  ShowMessageBox('Use ISO country codes and '','' as a separator.', 'Help');
+end;
+
 procedure TEditCheckerPresetForm.Fill(const CheckerPreset: TCheckerPreset);
 begin
   FCheckerPreset := CheckerPreset;
 
   PresetNameEdit.Text := CheckerPreset.Name;
 
-  Edit2.Text := CheckerPreset.Url;
-  NumberBox1.ValueInt := CheckerPreset.Timeout;
-  Memo1.Text := CheckerPreset.RequestHeaders;
-  Edit3.Text := CheckerPreset.UserAgent;
+  Edit2.Text := CheckerPreset.Request.Url;
+  NumberBox1.ValueInt := CheckerPreset.Request.Timeout;
+  Memo1.Text := CheckerPreset.Request.Headers;
+  Edit3.Text := CheckerPreset.Request.UserAgent;
 
-  NumberBox2.ValueInt := CheckerPreset.StatusCode;
+  NumberBox2.ValueInt := CheckerPreset.GoodProxy.StatusCode;
+  Edit1.Text := CheckerPreset.GoodProxy.Countries;
+  ComboBox1.ItemIndex := Integer(CheckerPreset.GoodProxy.AnonymityLevel);
+  NumberBox3.ValueFloat := CheckerPreset.GoodProxy.MaxPing;
 
-  CheckBox4.Checked := CheckerPreset.SaveHttp;
-  CheckBox3.Checked := CheckerPreset.SaveSocks4;
-  CheckBox5.Checked := CheckerPreset.SaveSocks5;
-  CheckBox6.Checked := CheckerPreset.SaveBad;
-  CheckBox7.Checked := CheckerPreset.SaveToFile;
-  CheckBox8.Checked := CheckerPreset.SaveToLocalServer;
+  CheckBox4.Checked := CheckerPreset.ProxySaving.Http;
+  CheckBox3.Checked := CheckerPreset.ProxySaving.Socks4;
+  CheckBox5.Checked := CheckerPreset.ProxySaving.Socks5;
+  CheckBox6.Checked := CheckerPreset.ProxySaving.Bad;
+  CheckBox7.Checked := CheckerPreset.ProxySaving.ToFile;
+  CheckBox8.Checked := CheckerPreset.ProxySaving.ToLocalServer;
+
   CheckBox2.Checked := CheckerPreset.AddGoodProxyToTable;
-
 
 end;
 
@@ -144,37 +162,44 @@ begin
     (PresetNameEdit.Text <> '') and
     (Edit2.Text <> '') and (Edit3.Text <> '') and (Memo1.Text <> '');
 
-
-
 end;
 
 procedure TEditCheckerPresetForm.SaveButtonClick(Sender: TObject);
 begin
   if not IsDataValid then
+  begin
+    ShowErrorMessageBox('The data is invalid.');
     Exit;
+  end;
 
   FCheckerPreset.Name := PresetNameEdit.Text;
 
-  FCheckerPreset.Url := Edit2.Text;
-  FCheckerPreset.Timeout := NumberBox1.ValueInt;
-  FCheckerPreset.RequestHeaders := Memo1.Text;
-  FCheckerPreset.UserAgent := Edit3.Text;
+  FCheckerPreset.Request.Url := Edit2.Text;
+  FCheckerPreset.Request.Timeout := NumberBox1.ValueInt;
+  FCheckerPreset.Request.Headers := Memo1.Text;
+  FCheckerPreset.Request.UserAgent := Edit3.Text;
 
-  FCheckerPreset.StatusCode := NumberBox2.ValueInt;
+  FCheckerPreset.GoodProxy.StatusCode := NumberBox2.ValueInt;
+  FCheckerPreset.GoodProxy.Countries := Edit1.Text;
+  FCheckerPreset.GoodProxy.AnonymityLevel := TAnonymityLevel(ComboBox1.ItemIndex);
+  FCheckerPreset.GoodProxy.MaxPing := NumberBox3.ValueFloat;
 
-  FCheckerPreset.SaveHttp := CheckBox4.Checked;
-  FCheckerPreset.SaveSocks4 := CheckBox3.Checked;
-  FCheckerPreset.SaveSocks5 := CheckBox5.Checked;
-  FCheckerPreset.SaveBad := CheckBox6.Checked;
-  FCheckerPreset.SaveToFile := CheckBox7.Checked;
-  FCheckerPreset.SaveToLocalServer := CheckBox8.Checked;
+  FCheckerPreset.ProxySaving.Http := CheckBox4.Checked;
+  FCheckerPreset.ProxySaving.Socks4 := CheckBox3.Checked;
+  FCheckerPreset.ProxySaving.Socks5 := CheckBox5.Checked;
+  FCheckerPreset.ProxySaving.Bad := CheckBox6.Checked;
+  FCheckerPreset.ProxySaving.ToFile := CheckBox7.Checked;
+  FCheckerPreset.ProxySaving.ToLocalServer := CheckBox8.Checked;
 
   FCheckerPreset.AddGoodProxyToTable := CheckBox2.Checked;
 
   if FCheckerPreset.Id = 0 then
   begin
     if Database.CheckerPresetsTable.ContainsName(PresetNameEdit.Text) then
+    begin
+      ShowErrorMessageBox('A preset with this name already exists.');
       Exit;
+    end;
 
     Database.CheckerPresetsTable.Add(FCheckerPreset);
   end
@@ -189,6 +214,16 @@ end;
 procedure TEditCheckerPresetForm.SetFirstPage;
 begin
   PageControl.ActivePageIndex := 0;
+end;
+
+procedure TEditCheckerPresetForm.ShowErrorMessageBox(const Text: string);
+begin
+  MessageBox(Handle, PChar(Text), PChar('Error'), MB_OK or MB_ICONERROR);
+end;
+
+procedure TEditCheckerPresetForm.ShowMessageBox(const Text, Title: string);
+begin
+  MessageBox(Handle, PChar(Text), PChar(Title), MB_OK or MB_ICONINFORMATION);
 end;
 
 procedure TEditCheckerPresetForm.ShowModalForAdding;

@@ -50,25 +50,44 @@ type
   end;
 
 type
+  TGoodProxy = record
+  public
+    StatusCode: Integer;
+    AnonymityLevel: TAnonymityLevel;
+    Countries: string;
+    MaxPing: Single;
+  end;
+
+type
+  TProxySaving = record
+  public
+    Http: Boolean;
+    Socks4: Boolean;
+    Socks5: Boolean;
+    Bad: Boolean;
+    ToFile: Boolean;
+    ToLocalServer: Boolean;
+  end;
+
+type
+  TCheckerRequest = record
+  public
+    Url: string;
+    Timeout: Integer;
+    Headers: string;
+    UserAgent: string;
+  end;
+
+type
   PCheckerPreset = ^TCheckerPreset;
   TCheckerPreset = record
   public
     Id: Integer;
     Name: string;
-    { Request }
-    Url: string;
-    Timeout: Integer;
-    RequestHeaders: string;
-    UserAgent: string;
-    StatusCode: Integer;
-    { Save }
-    SaveHttp: Boolean;
-    SaveSocks4: Boolean;
-    SaveSocks5: Boolean;
-    SaveBad: Boolean;
-    SaveToFile: Boolean;
-    SaveToLocalServer: Boolean;
+    Request: TCheckerRequest;
     AddGoodProxyToTable: Boolean;
+    ProxySaving: TProxySaving;
+    GoodProxy: TGoodProxy;
     procedure Clear;
     function IsValid: Boolean;
   end;
@@ -79,6 +98,7 @@ type
   public
     Proxy: TProxy;
     Status: TProxyStatus;
+    StatusCode: Integer;
     AnonymityLevel: TAnonymityLevel;
     Country: string;
     City: string;
@@ -107,7 +127,7 @@ end;
 
 function TCheckerPreset.IsValid: Boolean;
 begin
-  Result := (not Url.IsEmpty) and (not RequestHeaders.IsEmpty) and (not UserAgent.IsEmpty);
+  Result := (Name <> '') and (Request.Url <> '') and (Request.Headers <> '') and (Request.UserAgent <> '');
 end;
 
 end.

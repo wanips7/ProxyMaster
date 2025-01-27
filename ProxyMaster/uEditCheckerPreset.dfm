@@ -42,7 +42,7 @@ object EditCheckerPresetForm: TEditCheckerPresetForm
     Margins.Top = 4
     Margins.Right = 4
     Margins.Bottom = 4
-    ActivePage = TabSheet2
+    ActivePage = TabSheet3
     TabOrder = 1
     object TabSheet1: TTabSheet
       Margins.Left = 4
@@ -181,7 +181,7 @@ object EditCheckerPresetForm: TEditCheckerPresetForm
       Margins.Top = 4
       Margins.Right = 4
       Margins.Bottom = 4
-      Caption = 'Good conditions'
+      Caption = 'Good proxy'
       ImageIndex = 2
       object Label6: TLabel
         Left = 20
@@ -193,6 +193,39 @@ object EditCheckerPresetForm: TEditCheckerPresetForm
         Margins.Right = 4
         Margins.Bottom = 4
         Caption = 'Status code'
+      end
+      object Label7: TLabel
+        Left = 20
+        Top = 92
+        Width = 62
+        Height = 20
+        Margins.Left = 4
+        Margins.Top = 4
+        Margins.Right = 4
+        Margins.Bottom = 4
+        Caption = 'Countries'
+      end
+      object Label8: TLabel
+        Left = 20
+        Top = 170
+        Width = 106
+        Height = 20
+        Margins.Left = 4
+        Margins.Top = 4
+        Margins.Right = 4
+        Margins.Bottom = 4
+        Caption = 'Anonymity level'
+      end
+      object Label9: TLabel
+        Left = 20
+        Top = 250
+        Width = 62
+        Height = 20
+        Margins.Left = 4
+        Margins.Top = 4
+        Margins.Right = 4
+        Margins.Bottom = 4
+        Caption = 'Max ping'
       end
       object NumberBox2: TNumberBox
         Left = 20
@@ -209,13 +242,70 @@ object EditCheckerPresetForm: TEditCheckerPresetForm
         Value = 200.000000000000000000
         SpinButtonOptions.ButtonWidth = 21
       end
+      object Edit1: TEdit
+        Left = 20
+        Top = 120
+        Width = 631
+        Height = 28
+        Margins.Left = 4
+        Margins.Top = 4
+        Margins.Right = 4
+        Margins.Bottom = 4
+        TabOrder = 1
+      end
+      object ComboBox1: TComboBox
+        Left = 20
+        Top = 198
+        Width = 181
+        Height = 28
+        Margins.Left = 4
+        Margins.Top = 4
+        Margins.Right = 4
+        Margins.Bottom = 4
+        Style = csDropDownList
+        ItemIndex = 0
+        TabOrder = 2
+        Text = 'Any'
+        Items.Strings = (
+          'Any'
+          'Transparent'
+          'Anonymous'
+          'Elite')
+      end
+      object NumberBox3: TNumberBox
+        Left = 20
+        Top = 278
+        Width = 145
+        Height = 28
+        Margins.Left = 4
+        Margins.Top = 4
+        Margins.Right = 4
+        Margins.Bottom = 4
+        Mode = nbmFloat
+        TabOrder = 3
+        SpinButtonOptions.ButtonWidth = 21
+        SpinButtonOptions.Placement = nbspInline
+      end
+      object CountriesHelpButton: TButton
+        Left = 659
+        Top = 119
+        Width = 41
+        Height = 31
+        Margins.Left = 4
+        Margins.Top = 4
+        Margins.Right = 4
+        Margins.Bottom = 4
+        Caption = '?'
+        TabOrder = 4
+        OnClick = CountriesHelpButtonClick
+      end
     end
     object TabSheet4: TTabSheet
       Margins.Left = 4
       Margins.Top = 4
       Margins.Right = 4
       Margins.Bottom = 4
-      Caption = 'Save'
+      Caption = 'Saving'
       ImageIndex = 3
       object GroupBox1: TGroupBox
         Left = 4
