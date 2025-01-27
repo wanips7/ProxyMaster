@@ -8,6 +8,7 @@ Fast proxy checker/grabber with some features:
  - Scheduler
  - Fast and lightweight
  - Save proxies to a file or to the local http server
+ - Conditions for a good proxy (status code, countries, anonimity level, max ping)
 ```
 
 <details>
@@ -25,7 +26,9 @@ Fast proxy checker/grabber with some features:
 
 #
 
-This project uses:
+<details>
+<summary>This project uses</summary>
+ 
 ```
 Virtual-TreeView
 https://github.com/JAM-Software/Virtual-TreeView
@@ -45,3 +48,5 @@ https://github.com/rvelthuis/DelphiBigNumbers
 IP geolocation database
 https://github.com/P3TERX/GeoLite.mmdb
 ```
+
+</details>
